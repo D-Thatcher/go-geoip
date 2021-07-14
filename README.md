@@ -3,7 +3,7 @@
 
 # go-geoip
 
-## A Golang CLI tool for geolocating IP addresses and hosts and displaying them on a static street map. With support for identifying cloud provider addresses and TOR exit nodes
+### A Golang CLI tool for geolocating IP addresses and hosts and displaying them on a static street map. With support for identifying cloud provider addresses and TOR exit nodes
 
 
 ## Overview
