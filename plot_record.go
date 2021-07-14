@@ -27,7 +27,8 @@ type TextMarker struct {
 	LineWidth  float64
 }
 
-func NewTextMarker(pos s2.LatLng, text string) *TextMarker {
+// TextMarker with area text written above it, fitted to the width of the max line length, and to the height of the number of lines, plus a margin
+func InfoTextMarker(pos s2.LatLng, text string) *TextMarker {
 	s := new(TextMarker)
 	s.Position = pos
 	s.Text = text
@@ -59,18 +60,21 @@ func NewTextMarker(pos s2.LatLng, text string) *TextMarker {
 	return s
 }
 
+// Add a margin to the text area
 func (s *TextMarker) ExtraMarginPixels() (float64, float64, float64, float64) {
 	w := math.Max(4.0+s.TextWidth, 2*s.TipSize)
 	h := s.TipSize + s.TextHeight + 4.0
 	return w * 0.5, h, w * 0.5, 0.0
 }
 
+// Create empty bounds for the text area
 func (s *TextMarker) Bounds() s2.Rect {
 	r := s2.EmptyRect()
 	r = r.AddPoint(s.Position)
 	return r
 }
 
+// Implement the Draw functionality so it can be rendered
 func (s *TextMarker) Draw(gc *gg.Context, trans *sm.Transformer) {
 	if !sm.CanDisplay(s.Position) {
 		return
@@ -113,39 +117,39 @@ func buildMap(arr []*Displayable, outfilepth *string, useMarker *bool) {
 	const ZOOM_OUT_FACTOR = 1000
 
 	ctx.SetSize(2.5*ZOOM_OUT_FACTOR, ZOOM_OUT_FACTOR)
-	Lat_Ip := make(map[float64]string, len(arr))
-	Lon_Ip := make(map[float64]string, len(arr))  // maps to string uuid
-	Uuid_Map := make(map[string]string, len(arr)) // uuid maps to stringified list of ip sep by comma
-	Uuid_Org := make(map[string]string, len(arr)) // uuid maps to stringified list of Org sep by comma
-	Uuid_ASN := make(map[string]string, len(arr)) // uuid maps to stringified list of ASN sep by comma
+	LatIP := make(map[float64]string, len(arr))
+	LonIP := make(map[float64]string, len(arr))  // maps to string uuid
+	UUIDMap := make(map[string]string, len(arr)) // uuid maps to stringified list of ip sep by comma
+	UUIDOrg := make(map[string]string, len(arr)) // uuid maps to stringified list of Org sep by comma
+	UUIDASN := make(map[string]string, len(arr)) // uuid maps to stringified list of ASN sep by comma
 
 	for _, el := range arr {
 
 		Cityrecord := el.City
 		if (""+Cityrecord.Country.Names["en"] == "") && (""+Cityrecord.City.Names["en"] == "") {
-			fmt.Printf("Warning: no information found for %v\n", el.IP_address)
+			fmt.Printf("Warning: no information found for %v\n", el.IPAddress)
 			continue
 		}
 
 		ASNrecord := el.Asn
-		ASN_Number := strconv.FormatUint(uint64(ASNrecord.AutonomousSystemNumber), 10)
+		ASNNumber := strconv.FormatUint(uint64(ASNrecord.AutonomousSystemNumber), 10)
 		Org := ASNrecord.AutonomousSystemOrganization
 
-		cor_uuid_lat, containedLat := Lat_Ip[Cityrecord.Location.Latitude]
-		_, containedLon := Lon_Ip[Cityrecord.Location.Longitude]
-		useip := el.IP_address
+		corUUIDLat, containedLat := LatIP[Cityrecord.Location.Latitude]
+		_, containedLon := LonIP[Cityrecord.Location.Longitude]
+		useip := el.IPAddress
 		useorg := Org
-		useasn := ASN_Number
+		useasn := ASNNumber
 
 		if !containedLat && !containedLon {
 			uuidS := uuid.New().String()
-			Lat_Ip[Cityrecord.Location.Latitude] = uuidS
-			Lon_Ip[Cityrecord.Location.Longitude] = uuidS
-			Uuid_Map[uuidS] = el.IP_address
-			Uuid_ASN[uuidS] = ASN_Number
-			Uuid_Org[uuidS] = Org
-			if el.Connected_to != nil {
-				for _, d := range *el.Connected_to {
+			LatIP[Cityrecord.Location.Latitude] = uuidS
+			LonIP[Cityrecord.Location.Longitude] = uuidS
+			UUIDMap[uuidS] = el.IPAddress
+			UUIDASN[uuidS] = ASNNumber
+			UUIDOrg[uuidS] = Org
+			if el.ConnectedTo != nil {
+				for _, d := range *el.ConnectedTo {
 					if (""+d.City.Country.Names["en"] == "") && (""+d.City.City.Names["en"] == "") {
 						continue
 					}
@@ -157,18 +161,18 @@ func buildMap(arr []*Displayable, outfilepth *string, useMarker *bool) {
 			}
 
 		} else {
-			if !strings.Contains(Uuid_Map[cor_uuid_lat], el.IP_address) {
-				Uuid_Map[cor_uuid_lat] += ", " + el.IP_address
+			if !strings.Contains(UUIDMap[corUUIDLat], el.IPAddress) {
+				UUIDMap[corUUIDLat] += ", " + el.IPAddress
 			}
-			if !strings.Contains(Uuid_ASN[cor_uuid_lat], ASN_Number) {
-				Uuid_ASN[cor_uuid_lat] += ", " + ASN_Number
+			if !strings.Contains(UUIDASN[corUUIDLat], ASNNumber) {
+				UUIDASN[corUUIDLat] += ", " + ASNNumber
 			}
-			if !strings.Contains(Uuid_Org[cor_uuid_lat], Org) {
-				Uuid_Org[cor_uuid_lat] += ", " + Org
+			if !strings.Contains(UUIDOrg[corUUIDLat], Org) {
+				UUIDOrg[corUUIDLat] += ", " + Org
 			}
-			useip = Uuid_Map[cor_uuid_lat]
-			useasn = Uuid_ASN[cor_uuid_lat]
-			useorg = Uuid_Org[cor_uuid_lat]
+			useip = UUIDMap[corUUIDLat]
+			useasn = UUIDASN[corUUIDLat]
+			useorg = UUIDOrg[corUUIDLat]
 
 		}
 
@@ -181,16 +185,16 @@ func buildMap(arr []*Displayable, outfilepth *string, useMarker *bool) {
 			ctx.AddObject(rec)
 
 		} else {
-			Write_text := "IP: " + useip + "\nCountry: " + Cityrecord.Country.Names["en"]
+			WriteText := "IP: " + useip + "\nCountry: " + Cityrecord.Country.Names["en"]
 			if len(Cityrecord.Subdivisions) > 0 {
-				Write_text += "\nRegion: " + Cityrecord.Subdivisions[0].Names["en"]
+				WriteText += "\nRegion: " + Cityrecord.Subdivisions[0].Names["en"]
 			}
-			Write_text += "\nCity: " + Cityrecord.City.Names["en"] + "\nOrg: " + useorg + "\nASN: " + useasn
-			if el.Exit_node {
-				Write_text += "\n " + el.Service_type + " exit node"
+			WriteText += "\nCity: " + Cityrecord.City.Names["en"] + "\nOrg: " + useorg + "\nASN: " + useasn
+			if el.ExitNode {
+				WriteText += "\n " + el.ServiceType + " exit node"
 			}
 
-			rec := NewTextMarker(s2.LatLngFromDegrees(Cityrecord.Location.Latitude, Cityrecord.Location.Longitude), Write_text)
+			rec := InfoTextMarker(s2.LatLngFromDegrees(Cityrecord.Location.Latitude, Cityrecord.Location.Longitude), WriteText)
 			ctx.AddObject(rec)
 		}
 	}

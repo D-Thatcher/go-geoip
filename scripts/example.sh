@@ -14,5 +14,10 @@
 # ./go-geoip -connect=true -onlymarker=false -o=mymap.png -ip=205.206.163.40,2406:da70:4000::1:3bb2,193.218.118.182,2406:db70:4000::1:3f52,amazon.com
 #asset4 ./go-geoip -o=asset4.png -ip=2406:da70:4000::1:3f51,199.249.230.186
 #asset5 ./go-geoip -o=asset5.png -connect=false -city-mmdb=GeoDB/GeoLite2-City.mmdb -asn-mmdb=GeoDB/GeoLite2-ASN.mmdb -ip=me,github.com
-
+./go-geoip -o=asset1.png -ip=158.69.63.54,2605:8d80:648:eab7:290e:5c6f:f83:f189
+./go-geoip -o=asset2.png -ip=me,google.com,slack.com
+./go-geoip -onlymarker=true -o=asset3.png -ip=52.93.126.199
+./go-geoip -connect=true -onlymarker=false -o=mymap.png -ip=205.206.163.40,2406:da70:4000::1:3bb2,193.218.118.182,2406:db70:4000::1:3f52,amazon.com
+./go-geoip -o=asset4.png -ip=2406:da70:4000::1:3f51,199.249.230.186
+./go-geoip -o=asset5.png -connect=false -city-mmdb=GeoDB/GeoLite2-City.mmdb -asn-mmdb=GeoDB/GeoLite2-ASN.mmdb -ip=me,github.com
 

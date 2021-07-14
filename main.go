@@ -9,18 +9,27 @@ import (
 	"strings"
 )
 
-const Default_output_file = "map.png"
-const Default_city_db = "GeoDB/GeoLite2-City.mmdb"
-const Default_asn_db = "GeoDB/GeoLite2-ASN.mmdb"
-const exit_node_file = "./exit_nodes/nodes.txt"
-const aws_exit_node_file = "./exit_nodes/aws_ip.txt"
+// Default static map output file location
+const DefaultOutputFile = "map.png"
+
+// Default location of the IP to City MaxMind db
+const DefaultCityDb = "GeoDB/GeoLite2-City.mmdb"
+
+// Default location of the IP to ASN MaxMind db
+const DefaultAsnDb = "GeoDB/GeoLite2-ASN.mmdb"
+
+// Default location of line-delimited text file containing TOR exit node addresses
+const ExitNodeFile = "./exit_nodes/nodes.txt"
+
+// Default location of line-delimited text file containing AWS hosted zone subnets
+const AwsExitNodeFile = "./exit_nodes/aws_ip.txt"
 
 var wordPtr = flag.String("ip", "", "a comma delimited string of IPv4 addresses (default to your public IP)")
 var markerPtr = flag.Bool("onlymarker", false, "true/false indicating whether to plot just a marker instead of text")
 var connPtr = flag.Bool("connect", true, "true/false indicating whether to connect all the markers")
-var outFilePtr = flag.String("o", Default_output_file, "output path of static map image")
-var maxMindCityFilePtr = flag.String("city-mmdb", Default_city_db, "input path of Geolite2-City.mmdb")
-var maxMindASNFilePtr = flag.String("asn-mmdb", Default_asn_db, "input path of Geolite2-ASN.mmdb")
+var outFilePtr = flag.String("o", DefaultOutputFile, "output path of static map image")
+var maxMindCityFilePtr = flag.String("city-mmdb", DefaultCityDb, "input path of Geolite2-City.mmdb")
+var maxMindASNFilePtr = flag.String("asn-mmdb", DefaultAsnDb, "input path of Geolite2-ASN.mmdb")
 
 func findIP(db *geoip2.Reader, ipadd string) *geoip2.City {
 	ip := net.ParseIP(ipadd)
@@ -31,6 +40,7 @@ func findIP(db *geoip2.Reader, ipadd string) *geoip2.City {
 	return record
 }
 
+// Open an arbitrary MaxMind database (*.mmdb), leave the closing to the main func
 func OpenMMDB(pth string) *geoip2.Reader {
 	db, err := geoip2.Open(pth)
 	if err != nil {
@@ -48,109 +58,111 @@ func findASN(db *geoip2.Reader, ipadd string) *geoip2.ASN {
 	return record
 }
 
+// Prelim check to see if an IP might be of the IPv6 format
 func IsIPv6(address string) bool {
 	return strings.Count(address, ":") >= 2
 }
 
+// Struct containing all the info we want to display on the street map. Connected_to lists the associated Displayable objs its linked to on the map
 type Displayable struct {
-	City         *geoip2.City
-	Asn          *geoip2.ASN
-	Exit_node    bool
-	Service_type string
-	IP_address   string
-	Connected_to *[]*Displayable
-	Pin_marker   bool
+	City        *geoip2.City
+	Asn         *geoip2.ASN
+	ExitNode    bool
+	ServiceType string
+	IPAddress   string
+	ConnectedTo *[]*Displayable
+	PinMarker   bool
 }
 
 func main() {
 	flag.Parse()
-	Arg_ip := strings.Split(*wordPtr, ",")
+	ArgIP := strings.Split(*wordPtr, ",")
 
 	if len(*wordPtr) == 0 {
-		Arg_ip = []string{GetPublicIpV4()}
+		ArgIP = []string{GetPublicIpV4()}
 	}
 
 	var allDisplay []*Displayable
-	ASN_db := OpenMMDB(*maxMindASNFilePtr)
-	defer ASN_db.Close()
-	City_db := OpenMMDB(*maxMindCityFilePtr)
-	defer City_db.Close()
-	exit_node_map := OpenNodesAsMap(exit_node_file)
-	aws_ip_lines, err := readLines(aws_exit_node_file)
+	ASNDb := OpenMMDB(*maxMindASNFilePtr)
+	defer ASNDb.Close()
+	CityDb := OpenMMDB(*maxMindCityFilePtr)
+	defer CityDb.Close()
+	exitNodeMap := OpenNodesAsMap(ExitNodeFile)
+	awsIPLines, err := readLines(AwsExitNodeFile)
 	if err != nil {
 		panic(err)
 	}
 
 	var CleanIP []string
 
-	for _, Ip_address := range Arg_ip {
-		Ip_address = strings.ToLower(Ip_address)
-		if Ip_address == "me" {
-			Ip_address = GetPublicIpV4()
+	for _, IPAddressInput := range ArgIP {
+		IPAddressInput = strings.ToLower(IPAddressInput)
+		if IPAddressInput == "me" {
+			IPAddressInput = GetPublicIpV4()
 		}
-		if strings.Contains(Ip_address, "http") {
-			panic("Remove protocol from hostnames " + Ip_address)
+		if strings.Contains(IPAddressInput, "http") {
+			panic("Remove protocol from hostnames " + IPAddressInput)
 		}
-		if strings.Contains(Ip_address, "/") {
-			if strings.Contains(Ip_address, ":") {
+		if strings.Contains(IPAddressInput, "/") {
+			if strings.Contains(IPAddressInput, ":") {
 				panic("IPv6 Address space for CIDR block is too expansive to locate")
 			}
-			fmt.Printf("Warning: removing CIDR block from ip notation %s \n", Ip_address)
-			IP_sep := strings.Split(Ip_address, "/")
-			Ip_address = IP_sep[0]
+			fmt.Printf("Warning: removing CIDR block from ip notation %s \n", IPAddressInput)
+			IPSep := strings.Split(IPAddressInput, "/")
+			IPAddressInput = IPSep[0]
 		}
-		if !validIP(Ip_address) {
-			addr, err := net.LookupIP(Ip_address)
+		if !validIP(IPAddressInput) {
+			addr, err := net.LookupIP(IPAddressInput)
 			if err != nil {
-				panic("Unknown IP address or hostname format " + Ip_address)
+				panic("Unknown IP address or hostname format " + IPAddressInput)
 			}
-			Ip_address = addr[0].String()
+			IPAddressInput = addr[0].String()
 			if len(addr) > 1 {
 				fmt.Printf("Warning: using only one of the host's ip address even though %v were available \n", len(addr))
 			}
 		}
 
-		if isPrivateIP(Ip_address) {
-			panic("Unable to geolocate private IP address " + Ip_address)
+		if isPrivateIP(IPAddressInput) {
+			panic("Unable to geolocate private IP address " + IPAddressInput)
 		}
-		CleanIP = append(CleanIP, Ip_address)
+		CleanIP = append(CleanIP, IPAddressInput)
 	}
 
-	IP_belongs_to_aws := IsAWSExitNode(&aws_ip_lines, &Arg_ip)
-	for idx_raw, Clean_Ip_address := range CleanIP {
-		var rawinput string = Arg_ip[idx_raw]
+	IPBelongsToAws := IsAWSExitNode(&awsIPLines, &ArgIP)
+	for idxRaw, CleanIPAddress := range CleanIP {
+		var rawinput string = ArgIP[idxRaw]
 		if rawinput == "me" {
 			rawinput = GetPublicIpV4() // it's cached, dw
 		}
-		var Is_exit bool = false
-		var Service_type string = ""
+		var IsExit bool = false
+		var ServiceType string = ""
 
-		if !IsIPv6(Clean_Ip_address) {
-			Is_exit = IsExitNode(exit_node_map, Clean_Ip_address)
-			if Is_exit {
-				Service_type = "TOR"
+		if !IsIPv6(CleanIPAddress) {
+			IsExit = IsExitNode(exitNodeMap, CleanIPAddress)
+			if IsExit {
+				ServiceType = "TOR"
 			}
 		}
-		if !Is_exit {
-			v, _ := IP_belongs_to_aws[rawinput]
-			Is_exit = v
-			if Is_exit {
-				Service_type = "AWS"
+		if !IsExit {
+			v, _ := IPBelongsToAws[rawinput]
+			IsExit = v
+			if IsExit {
+				ServiceType = "AWS"
 			}
 		}
 
-		ASNrecord := findASN(ASN_db, Clean_Ip_address)
-		Cityrecord := findIP(City_db, Clean_Ip_address)
+		ASNrecord := findASN(ASNDb, CleanIPAddress)
+		Cityrecord := findIP(CityDb, CleanIPAddress)
 
 		var myslice *[]*Displayable
 
-		dpl := Displayable{Cityrecord, ASNrecord, Is_exit, Service_type, Clean_Ip_address, myslice, false}
+		dpl := Displayable{Cityrecord, ASNrecord, IsExit, ServiceType, CleanIPAddress, myslice, false}
 		allDisplay = append(allDisplay, &dpl)
 
 	}
 	if *connPtr {
 		for _, d := range allDisplay {
-			d.Connected_to = &allDisplay
+			d.ConnectedTo = &allDisplay
 		}
 	}
 

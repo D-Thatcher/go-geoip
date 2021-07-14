@@ -22,14 +22,13 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
+// Read the nodes.txt file into an iterable (default 0 byte alloc)
 func OpenNodesAsMap(fpth string) map[string]struct{} {
 	lines, err := readLines(fpth)
 	if err != nil {
 		panic(err)
 	}
-
-	m := make(map[string]struct{}, len(lines)) // 0 byte allocate
-
+	m := make(map[string]struct{}, len(lines))
 	for i := 0; i < len(lines); i++ {
 		var s struct{}
 		m[lines[i]] = s
@@ -37,11 +36,13 @@ func OpenNodesAsMap(fpth string) map[string]struct{} {
 	return m
 }
 
+// Determine if the input IP is in the Nodes map
 func IsExitNode(m map[string]struct{}, node string) bool {
 	_, contained := m[node]
 	return contained
 }
 
+// Iterates once over the input IPs and determines whether they're in any AWS hosted subnet
 func IsAWSExitNode(lines *[]string, LoIp *[]string) map[string]bool {
 	Retmap := make(map[string]bool, len(*LoIp))
 
