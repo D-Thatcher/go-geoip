@@ -108,5 +108,5 @@ go-geoip -o=asset5.png -connect=false -city-mmdb=GeoDB/GeoLite2-City.mmdb -asn-m
 ### Acknowledgements
 * [OpenStreetMap](https://www.openstreetmap.org/copyright)
 * [go-staticmaps](https://github.com/flopp/go-staticmaps)
-* Free databases provided by[MaxMind](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data?lang=en)
+* Free databases provided by [MaxMind](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data?lang=en)
 * Parsing MaxMind databases with [geoip2-golang](https://github.com/oschwald/geoip2-golang)
