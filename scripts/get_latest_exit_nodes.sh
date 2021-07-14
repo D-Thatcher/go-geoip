@@ -1,0 +1,1 @@
+curl https://check.torproject.org/torbulkexitlist -o ../exit_nodes/nodes.txt
