@@ -1,6 +1,6 @@
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/D-Thatcher/go-geoip)](https://pkg.go.dev/github.com/D-Thatcher/go-geoip)
 [![License MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)](https://github.com/D-Thatcher/go-geoip)
-[![Go Report Card](https://goreportcard.com/badge/github.com/D-Thatcher/go-geoip)](https://goreportcard.com/report/github.com/D-Thatcher/go-geoip)
+[![Go Report Card](https://goreportcard.com/badge/github.com/D-Thatcher/go-geoip?update=no-cache)](https://goreportcard.com/badge/github.com/D-Thatcher/go-geoip?update=no-cache)
 
 # go-geoip
 
