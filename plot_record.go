@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-// TextMarker
+// TextMarker is struct containing info used to draw on the map
 type TextMarker struct {
 	sm.MapObject
 	Position   s2.LatLng
@@ -27,7 +27,7 @@ type TextMarker struct {
 	LineWidth  float64
 }
 
-// TextMarker with area text written above it, fitted to the width of the max line length, and to the height of the number of lines, plus a margin
+// InfoTextMarker is a TextMarker with area text written above it, fitted to the width of the max line length, and to the height of the number of lines, plus a margin
 func InfoTextMarker(pos s2.LatLng, text string) *TextMarker {
 	s := new(TextMarker)
 	s.Position = pos
@@ -60,21 +60,21 @@ func InfoTextMarker(pos s2.LatLng, text string) *TextMarker {
 	return s
 }
 
-// Add a margin to the text area
+// ExtraMarginPixels is a method used to add a margin to the text area
 func (s *TextMarker) ExtraMarginPixels() (float64, float64, float64, float64) {
 	w := math.Max(4.0+s.TextWidth, 2*s.TipSize)
 	h := s.TipSize + s.TextHeight + 4.0
 	return w * 0.5, h, w * 0.5, 0.0
 }
 
-// Create empty bounds for the text area
+// Bounds is a method used to create empty bounds for the text area
 func (s *TextMarker) Bounds() s2.Rect {
 	r := s2.EmptyRect()
 	r = r.AddPoint(s.Position)
 	return r
 }
 
-// Implement the Draw functionality so it can be rendered
+// Draw is an implemented functionality so it can be rendered
 func (s *TextMarker) Draw(gc *gg.Context, trans *sm.Transformer) {
 	if !sm.CanDisplay(s.Position) {
 		return
@@ -111,6 +111,7 @@ func (s *TextMarker) Draw(gc *gg.Context, trans *sm.Transformer) {
 	// gc.DrawString(s.Text, x-s.TextWidth*0.5, y-s.TipSize-4.0)
 }
 
+// buildMap is a method used to iterate over the input IPs, query their location in the DB, and draw them on the street map
 func buildMap(arr []*Displayable, outfilepth *string, useMarker *bool) {
 	ctx := sm.NewContext()
 	ctx.SetSize(400, 300)

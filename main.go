@@ -9,19 +9,19 @@ import (
 	"strings"
 )
 
-// Default static map output file location
+// DefaultOutputFile is the default static map output file location
 const DefaultOutputFile = "map.png"
 
-// Default location of the IP to City MaxMind db
+// DefaultCityDb is the default location of the IP to City MaxMind db
 const DefaultCityDb = "GeoDB/GeoLite2-City.mmdb"
 
-// Default location of the IP to ASN MaxMind db
+// DefaultAsnDb is the default location of the IP to ASN MaxMind db
 const DefaultAsnDb = "GeoDB/GeoLite2-ASN.mmdb"
 
-// Default location of line-delimited text file containing TOR exit node addresses
+// ExitNodeFile is the default location of line-delimited text file containing TOR exit node addresses
 const ExitNodeFile = "./exit_nodes/nodes.txt"
 
-// Default location of line-delimited text file containing AWS hosted zone subnets
+// AwsExitNodeFile is the default location of line-delimited text file containing AWS hosted zone subnets
 const AwsExitNodeFile = "./exit_nodes/aws_ip.txt"
 
 var wordPtr = flag.String("ip", "", "a comma delimited string of IPv4 addresses (default to your public IP)")
@@ -40,7 +40,7 @@ func findIP(db *geoip2.Reader, ipadd string) *geoip2.City {
 	return record
 }
 
-// Open an arbitrary MaxMind database (*.mmdb), leave the closing to the main func
+// OpenMMDB is used to open an arbitrary MaxMind database (*.mmdb), leave the closing to the main func
 func OpenMMDB(pth string) *geoip2.Reader {
 	db, err := geoip2.Open(pth)
 	if err != nil {
@@ -58,12 +58,12 @@ func findASN(db *geoip2.Reader, ipadd string) *geoip2.ASN {
 	return record
 }
 
-// Prelim check to see if an IP might be of the IPv6 format
+// IsIPv6 is a prelim check to see if an IP might be of the IPv6 format
 func IsIPv6(address string) bool {
 	return strings.Count(address, ":") >= 2
 }
 
-// Struct containing all the info we want to display on the street map. Connected_to lists the associated Displayable objs its linked to on the map
+// Displayable is a struct containing all the info we want to display on the street map. Connected_to lists the associated Displayable objs its linked to on the map
 type Displayable struct {
 	City        *geoip2.City
 	Asn         *geoip2.ASN

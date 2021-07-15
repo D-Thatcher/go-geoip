@@ -50,15 +50,15 @@ func isPrivateIP(strIP string) bool {
 	return false
 }
 
-// struct of string IP address
+// IP is a struct of string IP address
 type IP struct {
 	Query string
 }
 
-// Cache a copy of the public  IP for multiple 'me' refs in the input list
+// PubIp is a cached copy of the public IP for multiple 'me' refs in the input list
 var PubIp string
 
-// Query an output server to get the true public  IPv4 of client. Seems to be the most reliable method
+// GetPublicIpV4 is a method used to query an output server to get the true public  IPv4 of client. Seems to be the most reliable method
 func GetPublicIpV4() string {
 	if len(PubIp) == 0 {
 		req, err := http.Get("https://checkip.amazonaws.com")
@@ -76,7 +76,7 @@ func GetPublicIpV4() string {
 	return PubIp
 }
 
-// Get preferred outbound ip of this machine
+// GetOutboundPrivateIP is a method to get preferred outbound ip of this machine
 func GetOutboundPrivateIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
