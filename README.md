@@ -16,7 +16,7 @@ go-geoip -o=mymap.png -ip=158.69.63.54,2605:8d80:648:eab7:290e:5c6f:f83:f189
 
 
 ### Supports:
-* IPv4 & IPv4 address format
+* IPv6 & IPv4 address format
 * CIDR blocks
 * AWS address lookup
 * TOR exit node lookup
