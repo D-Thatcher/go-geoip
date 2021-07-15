@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// readLines is a utility method for parsing the exit_node files
 func readLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -22,7 +23,7 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-// Read the nodes.txt file into an iterable (default 0 byte alloc)
+// OpenNodesAsMap is a method used to read the nodes.txt file into an iterable (default 0 byte alloc)
 func OpenNodesAsMap(fpth string) map[string]struct{} {
 	lines, err := readLines(fpth)
 	if err != nil {
@@ -36,13 +37,13 @@ func OpenNodesAsMap(fpth string) map[string]struct{} {
 	return m
 }
 
-// Determine if the input IP is in the Nodes map
+// IsExitNode is a method used to determine if the input IP is in the Nodes map
 func IsExitNode(m map[string]struct{}, node string) bool {
 	_, contained := m[node]
 	return contained
 }
 
-// Iterates once over the input IPs and determines whether they're in any AWS hosted subnet
+// IsAWSExitNode is a method that iterates once over the input IPs and determines whether they're in any AWS hosted subnet
 func IsAWSExitNode(lines *[]string, LoIp *[]string) map[string]bool {
 	Retmap := make(map[string]bool, len(*LoIp))
 
